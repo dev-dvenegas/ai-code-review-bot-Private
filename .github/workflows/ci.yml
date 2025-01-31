@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      # Supabase local para tests
+      supabase:
+        image: supabase/postgres:14.1.0
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Run migrations
+      run: |
+        python cli.py migrate
+      env:
+        SUPABASE_URL: http://localhost:5432
+        SUPABASE_SERVICE_KEY: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+        
+    - name: Run tests
+      run: |
+        python -m pytest tests/ --cov=. --cov-report=xml
+      env:
+        GITHUB_APP_ID: test_id
+        GITHUB_APP_PRIVATE_KEY: test_key
+        GITHUB_WEBHOOK_SECRET: test_secret
+        OPENAI_API_KEY: test_key
+        SUPABASE_URL: http://localhost:5432
+        SUPABASE_SERVICE_KEY: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+    
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: true
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install ruff black mypy
+    
+    - name: Run linters
+      run: |
+        ruff check .
+        black --check .
+        mypy . 
