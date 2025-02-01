@@ -20,6 +20,7 @@ gotrue~=2.11.3          # Cliente de autenticación de Supabase
 
 # Utilidades
 PyJWT>=2.8.0            # Manejo de JWT
+cryptography>=3.0
 requests>=2.31.0        # Cliente HTTP
 python-multipart>=0.0.6 # Manejo de formularios multipart
 typer>=0.9.0           # CLI moderno para Python

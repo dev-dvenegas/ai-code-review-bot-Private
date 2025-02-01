@@ -17,8 +17,7 @@ class ReviewsRepository:
 
     async def save(self, review: Review) -> Review:
         """
-        Guarda una revisión en la base de datos.
-        Si la revisión ya existe, la actualiza.
+        Guarda una revisión y sus comentarios en las tablas correspondientes.
         
         Args:
             review: Revisión a guardar
@@ -53,8 +52,16 @@ class ReviewsRepository:
         review_id = result.data[0]["id"]
         review.id = review_id
 
-        # Guardar comentarios
+        # Manejar comentarios en tabla separada
         if review.comments:
+            # Eliminar comentarios anteriores si existen
+            if review.id:
+                self.supabase.table("tech_review_comments") \
+                    .delete() \
+                    .eq("review_id", review_id) \
+                    .execute()
+
+            # Insertar nuevos comentarios
             comments_data = [
                 {
                     "review_id": review_id,
@@ -66,23 +73,20 @@ class ReviewsRepository:
                 for comment in review.comments
             ]
 
-            # Eliminar comentarios anteriores si existen
-            if review.id:
-                self.supabase.table("tech_review_comments") \
-                    .delete() \
-                    .eq("review_id", review_id) \
-                    .execute()
-
-            # Insertar nuevos comentarios
-            self.supabase.table("tech_review_comments") \
+            comments_result = self.supabase.table("tech_review_comments") \
                 .insert(comments_data) \
                 .execute()
+
+            # Actualizar IDs de comentarios
+            for i, comment in enumerate(review.comments):
+                comment.id = comments_result.data[i]["id"]
+                comment.review_id = review_id
 
         return review
 
     async def get_by_pr_id(self, pr_id: int) -> Optional[Review]:
         """
-        Obtiene la última revisión para un Pull Request.
+        Obtiene la última revisión para un Pull Request con sus comentarios.
         
         Args:
             pr_id: ID del Pull Request
@@ -103,15 +107,17 @@ class ReviewsRepository:
 
         review_data = result.data[0]
 
-        # Obtener comentarios
+        # Obtener comentarios asociados
         comments_result = self.supabase.table("tech_review_comments") \
             .select("*") \
             .eq("review_id", review_data["id"]) \
             .execute()
 
-        # Construir objeto Review
+        # Construir comentarios
         comments = [
             ReviewComment(
+                id=c["id"],
+                review_id=c["review_id"],
                 file_path=c["file_path"],
                 line_number=c["line_number"],
                 content=c["content"],
@@ -120,6 +126,7 @@ class ReviewsRepository:
             for c in comments_result.data
         ]
 
+        # Construir y retornar revisión completa
         return Review(
             id=review_data["id"],
             pull_request_id=review_data["pull_request_id"],

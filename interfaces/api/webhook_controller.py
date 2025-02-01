@@ -13,13 +13,15 @@ import logging
 
 # Configurar logging
 logger = logging.getLogger(__name__)
+logging.basicConfig(filename='logs.log', encoding='utf-8', level=logging.DEBUG)
+
 router = APIRouter()
 
 @router.post("/github")
 async def github_webhook(
     request: Request,
     settings = Depends(get_settings),
-    analyze_pr: AnalyzePullRequestUseCase = Depends(get_analyze_pr_use_case)
+    analyze_pr: AnalyzePullRequestUseCase = Depends(get_analyze_pr_use_case),
 ):
     """
     Endpoint para recibir webhooks de GitHub.
@@ -60,26 +62,26 @@ async def github_webhook(
         if event_type != "pull_request":
             logger.info(f"Evento ignorado: {event_type}")
             return {"message": "Event ignored"}
-            
+
         # Parsear webhook
         webhook_data = PullRequestWebhookDTO(**payload)
-        
+
         # Procesar solo eventos relevantes
-        if webhook_data.action not in ["opened", "synchronize", "reopened"]:
+        if webhook_data.action not in ["opened", "synchronize", "reopened", "labeled"]:
             logger.info(f"Acción ignorada: {webhook_data.action}")
             return {"message": f"Action {webhook_data.action} ignored"}
-        
+
         # Convertir a modelo de dominio
         pull_request = PullRequest.from_github_payload(payload)
-        
+
         # Ejecutar análisis
         logger.info(f"Iniciando análisis de PR #{pull_request.number}")
         result = await analyze_pr.execute(pull_request)
-        
+
         return {
             "message": "Analysis completed",
-            "pull_request": pull_request.number,
-            "status": result.status
+            # "pull_request": pull_request.number,
+            # "status": result.status
         }
         
     except Exception as e:

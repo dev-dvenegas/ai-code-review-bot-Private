@@ -4,13 +4,25 @@ from supabase import Client
 from domain.models.pull_request import PullRequest, PullRequestStatus
 
 class PullRequestRepository:
+    """
+    Repositorio para gestionar Pull Requests en la base de datos.
+    """
+
     def __init__(self, supabase: Client):
         self.supabase = supabase
-        self.table = "pull_requests"
 
-    async def save(self, pull_request: PullRequest) -> PullRequest:
-        data = {
-            "github_id": pull_request.id,
+    def save(self, pull_request: PullRequest) -> int:
+        """
+        Guarda o actualiza un Pull Request en la base de datos.
+        
+        Args:
+            pull_request: Pull Request a guardar
+            
+        Returns:
+            int: ID interno del PR en la base de datos
+        """
+        pr_data = {
+            "github_id": pull_request.github_id,
             "number": pull_request.number,
             "title": pull_request.title,
             "body": pull_request.body,
@@ -23,25 +35,48 @@ class PullRequestRepository:
             "updated_at": pull_request.updated_at.isoformat(),
             "labels": pull_request.labels
         }
+
+        # Intentar obtener PR existente primero
+        existing = self.supabase.table("tech_prs")\
+            .select("id")\
+            .eq("github_id", pull_request.github_id)\
+            .execute()
+
+        if existing.data:
+            # Actualizar existente
+            self.supabase.table("tech_prs")\
+                .update(pr_data)\
+                .eq("id", existing.data[0]["id"])\
+                .execute()
+            return existing.data[0]["id"]
+        else:
+            # Crear nuevo
+            result = self.supabase.table("tech_prs")\
+                .insert(pr_data)\
+                .execute()
+            return result.data[0]["id"]
+
+    def get_by_github_id(self, github_id: int) -> Optional[int]:
+        """
+        Obtiene el ID interno de un PR por su GitHub ID.
         
-        # Intentar actualizar primero
-        result = await self.supabase.table(self.table)\
-            .update(data)\
-            .eq("github_id", pull_request.id)\
+        Args:
+            github_id: ID del PR en GitHub
+            
+        Returns:
+            Optional[int]: ID interno del PR o None si no existe
+        """
+        result = self.supabase.table("tech_prs")\
+            .select("id")\
+            .eq("github_id", github_id)\
             .execute()
             
-        # Si no existe, insertar
-        if not result.data:
-            result = await self.supabase.table(self.table)\
-                .insert(data)\
-                .execute()
-        
-        return pull_request
+        return result.data[0]["id"] if result.data else None
 
     async def get_by_id(self, pr_id: int) -> Optional[PullRequest]:
-        result = await self.supabase.table(self.table)\
+        result = await self.supabase.table("tech_prs")\
             .select("*")\
-            .eq("github_id", pr_id)\
+            .eq("id", pr_id)\
             .execute()
             
         if not result.data:

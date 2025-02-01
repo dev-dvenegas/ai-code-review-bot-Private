@@ -37,6 +37,10 @@ class AIAnalysisResult(BaseModel):
         None,
         description="Sugerencia de título para el PR"
     )
+    suggested_description: Optional[str] = Field(
+        None,
+        description="Sugerencia de descripción para el PR"
+    )
     suggested_labels: List[str] = Field(
         default_factory=list,
         description="Etiquetas sugeridas para el PR"

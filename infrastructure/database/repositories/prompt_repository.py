@@ -21,77 +21,53 @@ class Prompt(BaseModel):
     metadata: dict = {}
 
 class PromptRepository:
-    def __init__(self, client: Client = None):
-        self.supabase = client or get_client(get_settings())
+    """
+    Repositorio para gestionar prompts y reglas de análisis.
+    Maneja la persistencia y recuperación de la configuración.
+    """
+
+    def __init__(self, supabase: Client):
+        self.supabase = supabase
         self.table = "tech_analysis_prompts"
         self.rules_table = "tech_analysis_rules"
 
-    async def get_active_prompt(self, name: str) -> PromptDTO:
+    def get_active_prompt(self) -> PromptDTO:
         """
-        Obtiene el prompt activo más reciente por nombre.
+        Obtiene el único prompt activo en el sistema.
         
-        Args:
-            name: Nombre del prompt
-            
         Returns:
             PromptDTO: Prompt activo encontrado
             
         Raises:
-            PromptNotFoundException: Si no se encuentra el prompt
+            PromptNotFoundException: Si no hay un prompt activo
         """
-        result = await self.supabase.table(self.table)\
+        result = self.supabase.table(self.table)\
             .select("*")\
-            .eq("name", name)\
             .eq("is_active", True)\
-            .order("version", desc=True)\
-            .limit(1)\
             .execute()
 
         if not result.data:
-            raise PromptNotFoundException(name)
+            raise PromptNotFoundException("No active prompt found")
 
         data = result.data[0]
-        return PromptDTO(
-            id=data["id"],
-            name=data["name"],
-            version=data["version"],
-            prompt_text=data["prompt_text"],
-            is_active=data["is_active"],
-            metadata=data["metadata"],
-            created_at=datetime.fromisoformat(data["created_at"]),
-            updated_at=datetime.fromisoformat(data["updated_at"])
-        )
+        return PromptDTO(**data)
 
-    async def get_all_active_rules(self) -> List[RuleDTO]:
+    def get_all_active_rules(self) -> List[RuleDTO]:
         """
         Obtiene todas las reglas activas ordenadas por prioridad.
         
         Returns:
             List[RuleDTO]: Lista de reglas activas
         """
-        result = await self.supabase.table(self.rules_table)\
+        result = self.supabase.table(self.rules_table)\
             .select("*")\
             .eq("is_active", True)\
             .order("priority")\
             .execute()
 
-        return [
-            RuleDTO(
-                id=rule["id"],
-                name=rule["name"],
-                description=rule["description"],
-                rule_type=rule["rule_type"],
-                rule_content=rule["rule_content"],
-                priority=rule["priority"],
-                is_active=rule["is_active"],
-                metadata=rule["metadata"],
-                created_at=datetime.fromisoformat(rule["created_at"]),
-                updated_at=datetime.fromisoformat(rule["updated_at"])
-            )
-            for rule in result.data
-        ]
+        return [RuleDTO(**rule) for rule in result.data]
 
-    async def create_prompt(self, dto: CreatePromptDTO) -> Prompt:
+    def create_prompt(self, dto: CreatePromptDTO) -> Prompt:
         """Crea un nuevo prompt"""
         data = {
             "name": dto.name,
@@ -101,13 +77,13 @@ class PromptRepository:
             "is_active": True
         }
         
-        result = await self.supabase.table(self.table)\
+        result = self.supabase.table(self.table)\
             .insert(data)\
             .execute()
             
         return Prompt(**result.data[0])
 
-    async def update_prompt(self, prompt_id: str, dto: UpdatePromptDTO) -> Optional[Prompt]:
+    def update_prompt(self, prompt_id: str, dto: UpdatePromptDTO) -> Optional[Prompt]:
         """Actualiza un prompt existente"""
         data = {
             "prompt_text": dto.prompt_text,
@@ -116,7 +92,7 @@ class PromptRepository:
             "updated_at": datetime.utcnow().isoformat()
         }
         
-        result = await self.supabase.table(self.table)\
+        result = self.supabase.table(self.table)\
             .update(data)\
             .eq("id", prompt_id)\
             .execute()
@@ -126,7 +102,7 @@ class PromptRepository:
             
         return Prompt(**result.data[0])
 
-    async def create_rule(self, dto: CreateRuleDTO) -> dict:
+    def create_rule(self, dto: CreateRuleDTO) -> dict:
         """Crea una nueva regla"""
         data = {
             "name": dto.name,
@@ -138,18 +114,18 @@ class PromptRepository:
             "is_active": True
         }
         
-        result = await self.supabase.table(self.rules_table)\
+        result = self.supabase.table(self.rules_table)\
             .insert(data)\
             .execute()
             
         return result.data[0]
 
-    async def update_rule(self, rule_id: str, dto: UpdateRuleDTO) -> Optional[dict]:
+    def update_rule(self, rule_id: str, dto: UpdateRuleDTO) -> Optional[dict]:
         """Actualiza una regla existente"""
         data = {k: v for k, v in dto.dict().items() if v is not None}
         data["updated_at"] = datetime.utcnow().isoformat()
         
-        result = await self.supabase.table(self.rules_table)\
+        result = self.supabase.table(self.rules_table)\
             .update(data)\
             .eq("id", rule_id)\
             .execute()
@@ -159,9 +135,9 @@ class PromptRepository:
             
         return result.data[0]
 
-    async def get_prompts_by_name(self, name: str) -> List[Prompt]:
+    def get_prompts_by_name(self, name: str) -> List[Prompt]:
         """Obtiene todos los prompts con un nombre específico"""
-        result = await self.supabase.table(self.table)\
+        result = self.supabase.table(self.table)\
             .select("*")\
             .eq("name", name)\
             .order("created_at", desc=True)\
@@ -169,9 +145,9 @@ class PromptRepository:
             
         return [Prompt(**data) for data in result.data]
 
-    async def get_rules_by_type(self, rule_type: str) -> List[dict]:
+    def get_rules_by_type(self, rule_type: str) -> List[dict]:
         """Obtiene todas las reglas de un tipo específico"""
-        result = await self.supabase.table(self.rules_table)\
+        result = self.supabase.table(self.rules_table)\
             .select("*")\
             .eq("rule_type", rule_type)\
             .order("priority", desc=True)\
@@ -179,28 +155,23 @@ class PromptRepository:
             
         return result.data
 
-    async def save_prompt(self, prompt: PromptDTO) -> PromptDTO:
+    def save_prompt(self, prompt: PromptDTO) -> PromptDTO:
         """
         Guarda un prompt en la base de datos.
+        Si el prompt es activo, desactiva todos los demás.
         
         Args:
             prompt: Prompt a guardar
             
         Returns:
             PromptDTO: Prompt guardado con ID actualizado
-            
-        Raises:
-            DuplicatePromptVersionException: Si ya existe la versión
         """
-        # Verificar duplicados
-        existing = self.supabase.table("tech_analysis_prompts") \
-            .select("id") \
-            .eq("name", prompt.name) \
-            .eq("version", prompt.version) \
-            .execute()
-
-        if existing.data and (not prompt.id or existing.data[0]["id"] != prompt.id):
-            raise DuplicatePromptVersionException(prompt.name, prompt.version)
+        # Si el prompt será activo, desactivar todos los demás
+        if prompt.is_active:
+            self.supabase.table(self.table)\
+                .update({"is_active": False})\
+                .neq("id", prompt.id if prompt.id else "")\
+                .execute()
 
         # Preparar datos
         prompt_data = {
@@ -214,15 +185,15 @@ class PromptRepository:
 
         if prompt.id:
             # Actualizar existente
-            result = self.supabase.table("tech_analysis_prompts") \
-                .update(prompt_data) \
-                .eq("id", prompt.id) \
+            result = self.supabase.table(self.table)\
+                .update(prompt_data)\
+                .eq("id", prompt.id)\
                 .execute()
         else:
             # Crear nuevo
             prompt_data["created_at"] = datetime.utcnow().isoformat()
-            result = self.supabase.table("tech_analysis_prompts") \
-                .insert(prompt_data) \
+            result = self.supabase.table(self.table)\
+                .insert(prompt_data)\
                 .execute()
 
         prompt.id = result.data[0]["id"]

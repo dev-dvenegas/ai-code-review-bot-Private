@@ -16,8 +16,10 @@ class ReviewStatus(Enum):
 class ReviewComment(BaseModel):
     """
     Modelo para los comentarios individuales en una revisión.
-    Cada comentario está asociado a una línea específica de código.
+    Corresponde a la tabla tech_review_comments.
     """
+    id: Optional[int] = None
+    review_id: Optional[int] = None
     file_path: str
     line_number: int
     content: str
@@ -26,18 +28,18 @@ class ReviewComment(BaseModel):
 class Review(BaseModel):
     """
     Modelo principal de una revisión de código.
-    Contiene el resultado del análisis del PR.
+    Corresponde a la tabla tech_reviews.
     """
-    id: Optional[str] = None
+    id: Optional[int] = None
     pull_request_id: int
     status: ReviewStatus
     summary: str
     score: float
-    comments: List[ReviewComment]
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     suggested_title: Optional[str] = None
     suggested_labels: List[str] = []
+    comments: List[ReviewComment] = []  # Relación con tech_review_comments
 
     def add_comment(self, file_path: str, line_number: int, content: str, suggestion: Optional[str] = None):
         """
@@ -51,6 +53,7 @@ class Review(BaseModel):
         """
         self.comments.append(
             ReviewComment(
+                review_id=self.id,
                 file_path=file_path,
                 line_number=line_number,
                 content=content,

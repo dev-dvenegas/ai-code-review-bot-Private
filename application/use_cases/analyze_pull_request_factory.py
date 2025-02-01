@@ -2,13 +2,17 @@
 # de análisis de Pull Requests con todas sus dependencias
 
 from fastapi import Depends
+
+from application.use_cases.generate_pr_metadata import GeneratePRMetadataUseCase
 from infrastructure.config.settings import get_settings, Settings
 from infrastructure.database.supabase_client import get_client
 from infrastructure.database.repositories.reviews_repository import ReviewsRepository
 from infrastructure.database.repositories.prompt_repository import PromptRepository
+from infrastructure.database.repositories.pull_request_repository import PullRequestRepository
+from infrastructure.database.repositories.pr_guidelines_repository import PRGuidelinesRepository
 from infrastructure.github.github_service import GitHubService
 from infrastructure.ai.langchain_orchestrator import LangchainOrchestrator
-from .analyze_pull_request import AnalyzePullRequestUseCase
+from application.use_cases.analyze_pull_request import AnalyzePullRequestUseCase
 
 def get_analyze_pr_use_case(
     settings: Settings = Depends(get_settings)
@@ -28,8 +32,10 @@ def get_analyze_pr_use_case(
     
     # Inicializar repositorios
     reviews_repo = ReviewsRepository(supabase)
+    pr_repo = PullRequestRepository(supabase)
     prompt_repo = PromptRepository(supabase)
-    
+    pr_guidelines_repository = PRGuidelinesRepository(supabase)
+
     # Inicializar servicios
     github_service = GitHubService(
         app_id=settings.GITHUB_APP_ID,
@@ -39,11 +45,17 @@ def get_analyze_pr_use_case(
     ai_service = LangchainOrchestrator(
         openai_api_key=settings.OPENAI_API_KEY
     )
-    
+
+    # Crear el caso de uso de generación de metadatos
+    metadata_generator = GeneratePRMetadataUseCase(pr_guidelines_repository)
+
     # Crear y retornar el caso de uso con todas sus dependencias
     return AnalyzePullRequestUseCase(
         reviews_repository=reviews_repo,
+        pull_request_repository=pr_repo,
         prompt_repository=prompt_repo,
         github_service=github_service,
-        ai_service=ai_service
-    ) 
+        ai_service=ai_service,
+        pr_guidelines_repository=pr_guidelines_repository,
+        metadata_generator=metadata_generator
+    )

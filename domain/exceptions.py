@@ -65,4 +65,8 @@ class ReviewFailedException(DomainException):
             code="REVIEW_FAILED",
             message=message,
             details=details
-        ) 
+        )
+
+class PRMetadataGenerationException(Exception):
+    """Excepción para errores al generar metadatos del PR."""
+    pass

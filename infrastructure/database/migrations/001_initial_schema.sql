@@ -25,6 +25,7 @@ create table if not exists tech_reviews (
     status text not null,                               -- Estado de la revisión
     summary text not null,                              -- Resumen de la revisión
     score float not null,                               -- Puntuación de la revisión
+    updated_at timestamp with time zone not null,       -- Fecha de última actualización
     created_at timestamp with time zone default now(),  -- Fecha de creación
     suggested_title text,                               -- Sugerencia de título
     suggested_labels jsonb default '[]'::jsonb          -- Sugerencia de labels

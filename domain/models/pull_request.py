@@ -33,6 +33,8 @@ class PullRequest(BaseModel):
     created_at: datetime
     updated_at: datetime
     labels: List[str] = []
+    suggested_labels: List[str] = []
+    suggested_title: str
 
     @classmethod
     def from_github_payload(cls, payload: dict) -> "PullRequest":
@@ -58,7 +60,9 @@ class PullRequest(BaseModel):
             head_branch=pr_data["head"]["ref"],
             created_at=datetime.fromisoformat(pr_data["created_at"].replace("Z", "+00:00")),
             updated_at=datetime.fromisoformat(pr_data["updated_at"].replace("Z", "+00:00")),
-            labels=[label["name"] for label in pr_data.get("labels", [])]
+            labels=[label["name"] for label in pr_data.get("labels", [])],
+            suggested_title='',
+            suggested_labels=[],
         )
 
     def is_ready_for_review(self) -> bool:
