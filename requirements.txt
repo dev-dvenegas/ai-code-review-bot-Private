@@ -25,3 +25,4 @@ requests>=2.31.0        # Cliente HTTP
 python-multipart>=0.0.6 # Manejo de formularios multipart
 typer>=0.9.0           # CLI moderno para Python
 httpx>=0.24.0          # Cliente HTTP async
+unidiff==0.7.0

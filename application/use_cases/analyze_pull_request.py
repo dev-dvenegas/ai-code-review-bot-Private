@@ -134,11 +134,7 @@ class AnalyzePullRequestUseCase:
                 label_guidelines=label_guidelines_str
             )
 
-            print('----------analysis_result---------', analysis_result)
-
             pull_request = await self.metadata_generator.execute(pull_request)
-
-            print('----------analysis_result---------', pull_request)
 
             # Actualizar review con resultados
             self._update_review_with_analysis(review, analysis_result)
@@ -150,7 +146,21 @@ class AnalyzePullRequestUseCase:
             await self.github.create_review_comments(
                 repository=pull_request.repository,
                 pr_number=pull_request.number,
-                review=review
+                review=review,
+                diff=diff,
+            )
+
+            # Crear un comentario adicional con la metadata sugerida para que el usuario la revise
+            metadata = {
+                "suggested_title": review.suggested_title,
+                "suggested_description": review.suggested_description,
+                "suggested_labels": ", ".join(review.suggested_labels)
+            }
+
+            await self.github.create_metadata_comment(
+                repository=pull_request.repository,
+                pr_number=pull_request.number,
+                metadata=metadata
             )
             return review
 
@@ -158,7 +168,7 @@ class AnalyzePullRequestUseCase:
             logger.error(f"Error analizando PR: {str(e)}", exc_info=True)
             if review:
                 review.fail(str(e))
-                self.reviews_repo.save(review)
+                await self.reviews_repo.save(review)
             raise ReviewFailedException(str(e))
 
     def _update_review_with_analysis(self, review: Review, analysis: AIAnalysisResult):
@@ -173,6 +183,7 @@ class AnalyzePullRequestUseCase:
         review.score = analysis.score
         review.suggested_title = analysis.suggested_title
         review.suggested_labels = analysis.suggested_labels
+        review.suggested_description = analysis.suggested_description
 
         for comment in analysis.comments:
             review.add_comment(

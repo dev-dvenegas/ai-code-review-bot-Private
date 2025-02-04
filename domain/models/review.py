@@ -38,6 +38,7 @@ class Review(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     suggested_title: Optional[str] = None
+    suggested_description: Optional[str] = None
     suggested_labels: List[str] = []
     comments: List[ReviewComment] = []  # Relación con tech_review_comments
 

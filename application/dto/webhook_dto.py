@@ -39,28 +39,31 @@ class PullRequestWebhookDTO(BaseModel):
 
     class Config:
         """Configuración adicional del modelo"""
-        allow_population_by_field_name = True
-        schema_extra = {
-            "example": {
-                "action": "opened",
-                "number": 1,
-                "pull_request": {
-                    "id": 123,
+        field: str
+        model_config = {
+            "populate_by_name": True,
+            "json_schema_extra": {
+                "example": {
+                    "action": "opened",
                     "number": 1,
-                    "title": "Feature: Add new functionality",
-                    "state": "open"
-                },
-                "repository": {
-                    "id": 456,
-                    "name": "my-repo",
-                    "full_name": "owner/my-repo",
-                    "private": False,
-                    "default_branch": "main"
-                },
-                "sender": {
-                    "login": "username",
-                    "id": 789,
-                    "type": "User"
+                    "pull_request": {
+                        "id": 123,
+                        "number": 1,
+                        "title": "Feature: Add new functionality",
+                        "state": "open"
+                    },
+                    "repository": {
+                        "id": 456,
+                        "name": "my-repo",
+                        "full_name": "owner/my-repo",
+                        "private": False,
+                        "default_branch": "main"
+                    },
+                    "sender": {
+                        "login": "username",
+                        "id": 789,
+                        "type": "User"
+                    }
                 }
             }
         } 
