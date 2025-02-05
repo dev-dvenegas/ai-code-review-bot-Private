@@ -1,0 +1,17 @@
+flowchart TD
+    A[GitHub Webhook Event]
+    B[Webhook Controller]
+    C[Obtener Dependencias<br>desde el Contenedor]
+    D[AnalyzePullRequestUseCase]
+    E[Repositorios:<br>Pull Request, Reviews, etc.]
+    F[GeneratePRMetadataUseCase]
+    G[GitHubService:<br>Publicar Comentarios]
+    H[Respuesta a GitHub]
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H 

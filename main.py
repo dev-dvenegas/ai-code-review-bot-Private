@@ -1,5 +1,6 @@
 # FastAPI es un framework moderno para construir APIs con Python
 # Está basado en Starlette para el manejo web y Pydantic para la validación de datos
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware  # Para manejar CORS (Cross-Origin Resource Sharing)
 from fastapi.openapi.utils import get_openapi  # Para personalizar la documentación OpenAPI
@@ -21,8 +22,24 @@ from supabase._sync.client import SupabaseException  # Errores generales de Supa
 
 # Importar e inicializar el logging
 from infrastructure.logging.logging_config import setup_logging
+from infrastructure.config.container import Container
 
 setup_logging()
+logger = logging.getLogger(__name__)
+
+# Crear y configurar el contenedor de dependencias
+container = Container()
+
+# Configurar el wire para inyección automática en los módulos
+container.wire(
+    modules=[
+        'interfaces.api.webhook_controller',
+        'interfaces.api.prompt_controller',
+        'interfaces.api.guidelines_controller',
+        'application.use_cases.analyze_pull_request',
+        'application.use_cases.generate_pr_metadata'
+    ]
+)
 
 # Creamos la aplicación FastAPI con metadata
 # Esta metadata se usa para generar la documentación automática
@@ -42,6 +59,9 @@ app = FastAPI(
     docs_url="/docs",  # URL para la documentación Swagger UI
     redoc_url="/redoc"  # URL para la documentación ReDoc
 )
+
+# Asignar el contenedor a la aplicación
+app.container = container
 
 # Función para personalizar el esquema OpenAPI
 # OpenAPI (anteriormente Swagger) es una especificación para documentar APIs REST
@@ -99,6 +119,25 @@ app.include_router(prompt_router)
 app.include_router(metrics_router)
 app.include_router(guidelines_router)
 
+@app.on_event("startup")
+async def startup_event():
+    """
+    Se ejecuta cuando inicia la aplicación.
+    Configura servicios necesarios.
+    """
+    # Inicializar contenedor y sus dependencias
+    container.init_resources()
+    logger.info("Aplicación iniciada correctamente")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """
+    Se ejecuta cuando se detiene la aplicación.
+    Limpia recursos.
+    """
+    # Limpiar recursos del contenedor
+    container.shutdown_resources()
+    logger.info("Aplicación detenida correctamente")
 
 # Endpoint simple para verificar que la API está funcionando
 @app.get("/health")

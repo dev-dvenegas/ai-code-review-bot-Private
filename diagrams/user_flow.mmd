@@ -1,0 +1,15 @@
+flowchart TD
+    A[Usuario crea o actualiza un PR en GitHub]
+    B[GitHub envía Webhook]
+    C[Webhook Controller recibe el evento]
+    D[Se procesa el PR con AnalyzePullRequestUseCase]
+    E[Se generan metadatos con GeneratePRMetadataUseCase]
+    F[GitHubService publica los comentarios]
+    G[Usuario revisa el PR con comentarios]
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G 

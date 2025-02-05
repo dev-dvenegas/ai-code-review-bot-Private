@@ -1,0 +1,35 @@
+flowchart TD
+    subgraph Input
+        PR[Pull Request Data]
+        Rules[Analysis Rules]
+        Prompt[Base Prompt]
+    end
+
+    subgraph LangChainOrchestrator
+        TP[Template Processor]
+        Parser[PydanticOutputParser]
+        Chain[LLMChain]
+        LLM[ChatOpenAI/GPT-4]
+    end
+
+    subgraph Output
+        AR[AIAnalysisResult]
+        Comments[Review Comments]
+        Meta[PR Metadata]
+    end
+
+    PR --> TP
+    Rules --> TP
+    Prompt --> TP
+
+    TP --> Chain
+    Chain --> LLM
+    LLM --> Parser
+    Parser --> AR
+
+    AR --> Comments
+    AR --> Meta
+
+    style LLM fill:#f9f,stroke:#333
+    style Chain fill:#bbf,stroke:#333
+    style Parser fill:#bfb,stroke:#333 

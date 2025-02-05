@@ -1,0 +1,41 @@
+flowchart TD
+    subgraph Domain["Dominio"]
+        DM["Modelos y Lógica de Dominio"]
+        DE["Excepciones de Dominio"]
+        DS["Servicios de Dominio"]
+    end
+
+    subgraph Application["Aplicación"]
+        UC["Casos de Uso"]
+        DTO["DTOs"]
+    end
+
+    subgraph Infrastructure["Infraestructura"]
+        REPO["Repositorios"]
+        EXT["Servicios Externos"]
+        CONFIG["Configuración e Inyección"]
+    end
+
+    subgraph Interfaces["Interfaces"]
+        API["API REST FastAPI"]
+        CLI["CLI"]
+    end
+
+    DM --> UC
+    DE --> UC
+    UC --> DTO
+
+    REPO --> EXT
+    CONFIG --> REPO
+    CONFIG --> EXT
+
+    UC --> REPO
+    UC --> EXT
+
+    API --> UC
+    CLI --> UC
+
+    style Domain fill:#f9f,stroke:#333
+    style Application fill:#bbf,stroke:#333
+    style Infrastructure fill:#bfb,stroke:#333
+    style Interfaces fill:#fbb,stroke:#333 

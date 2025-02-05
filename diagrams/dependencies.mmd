@@ -1,0 +1,47 @@
+flowchart TD
+    subgraph Infraestructura["Infraestructura"]
+        settings["Settings"]
+        supabase["Supabase Client"]
+        repoPrompt["Prompt Repository"]
+        repoReviews["Reviews Repository"]
+        repoPR["Pull Request Repository"]
+        repoGuidelines["PR Guidelines Repository"]
+        githubService["GitHubService"]
+        aiService["LangchainOrchestrator"]
+    end
+
+    subgraph Aplicacion["Aplicación"]
+        metadataGen["GeneratePRMetadataUseCase"]
+        analyzePR["AnalyzePullRequestUseCase"]
+    end
+
+    subgraph Interfaces["Interfaces"]
+        webhookCtrl["Webhook Controller"]
+        promptCtrl["Prompt Controller"]
+        guidelinesCtrl["Guidelines Controller"]
+    end
+
+    settings --> supabase
+    supabase --> repoPrompt
+    supabase --> repoReviews
+    supabase --> repoPR
+    supabase --> repoGuidelines
+
+    settings --> githubService
+    settings --> aiService
+    repoGuidelines --> metadataGen
+
+    repoReviews --> analyzePR
+    repoPR --> analyzePR
+    repoPrompt --> analyzePR
+    githubService --> analyzePR
+    aiService --> analyzePR
+    metadataGen --> analyzePR
+
+    analyzePR --- webhookCtrl
+    analyzePR --- promptCtrl
+    analyzePR --- guidelinesCtrl
+
+    style Infraestructura fill:#bfb,stroke:#333
+    style Aplicacion fill:#bbf,stroke:#333
+    style Interfaces fill:#fbb,stroke:#333 

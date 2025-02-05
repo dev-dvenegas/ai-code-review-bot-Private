@@ -3,11 +3,8 @@
 
 import hmac
 import hashlib
-from fastapi import APIRouter, Request, HTTPException, Depends
+from fastapi import APIRouter, Request, HTTPException
 from domain.models.pull_request import PullRequest
-from infrastructure.config.settings import get_settings
-from application.use_cases.analyze_pull_request import AnalyzePullRequestUseCase
-from application.use_cases.analyze_pull_request_factory import get_analyze_pr_use_case
 from application.dto.webhook_dto import PullRequestWebhookDTO
 import logging
 
@@ -17,19 +14,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.post("/github")
-async def github_webhook(
-    request: Request,
-    settings = Depends(get_settings),
-    analyze_pr: AnalyzePullRequestUseCase = Depends(get_analyze_pr_use_case),
-):
+async def github_webhook(request: Request):
     """
     Endpoint para recibir webhooks de GitHub.
     Verifica la firma y procesa eventos de Pull Request.
     
     Args:
         request: Petición HTTP con el webhook
-        settings: Configuración de la aplicación
-        analyze_pr: Caso de uso para analizar PRs
         
     Returns:
         dict: Resultado del procesamiento del webhook
@@ -38,6 +29,10 @@ async def github_webhook(
         HTTPException: Si hay errores de validación o procesamiento
     """
     try:
+        # Recuperamos la configuración y el caso de uso directamente del contenedor
+        settings = request.app.container.config()
+        analyze_pr = request.app.container.analyze_pull_request_use_case()
+
         # Verificar firma del webhook si está configurada
         if settings.GITHUB_WEBHOOK_SECRET:
             signature = request.headers.get("X-Hub-Signature-256")

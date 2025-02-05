@@ -30,28 +30,28 @@ class Container(containers.DeclarativeContainer):
     pr_guidelines_repository = providers.Factory(PRGuidelinesRepository, supabase=supabase_client)
 
     # Proveedor para el servicio de GitHub, inyectando el App ID y la llave privada.
-    github_service = providers.Factory(
+    github_service = providers.Singleton(
         GitHubService,
         app_id=config.provided.GITHUB_APP_ID,
         private_key=config.provided.GITHUB_APP_PRIVATE_KEY,
     )
 
     # Proveedor para el servicio de IA, inyectando la API key de OpenAI.
-    ai_service = providers.Factory(
+    ai_service = providers.Singleton(
         LangchainOrchestrator,
         openai_api_key=config.provided.OPENAI_API_KEY,
     )
 
     # Proveedor para el caso de uso que genera metadatos para los PR,
     # usando el repositorio de guías.
-    metadata_generator = providers.Factory(
+    metadata_generator = providers.Singleton(
         GeneratePRMetadataUseCase,
         pr_guidelines_repo=pr_guidelines_repository,
     )
 
     # Proveedor para el caso de uso principal de análisis de Pull Requests,
     # inyectando todos los repositorios y servicios necesarios.
-    analyze_pull_request_use_case = providers.Factory(
+    analyze_pull_request_use_case = providers.Singleton(
         AnalyzePullRequestUseCase,
         reviews_repository=reviews_repository,
         pull_request_repository=pull_request_repository,

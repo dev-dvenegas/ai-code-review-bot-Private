@@ -1,17 +1,63 @@
 # AI Pull Request Review Bot
 
-Un bot que analiza Pull Requests usando IA para proporcionar revisiones de código automáticas.
+Un bot que analiza Pull Requests usando IA para proporcionar revisiones de código automáticas y sugerencias de mejora.
 
-## Características
+## Características Principales
 
-- Análisis automático de Pull Requests usando GPT-4
-- Gestión de prompts y reglas de revisión personalizables
-- Integración con GitHub Apps
-- Almacenamiento en Supabase
-- API RESTful para gestión de prompts y reglas
-- CI/CD automatizado con GitHub Actions
-- CLI para gestión de migraciones y seeds
-- Docker para desarrollo y producción
+- **Análisis Automático de PRs:**
+  - Revisión de código usando GPT-4
+  - Detección de problemas potenciales
+  - Sugerencias de mejoras
+  - Análisis de complejidad y calidad
+
+- **Gestión de Reglas:**
+  - Prompts personalizables
+  - Reglas de revisión configurables
+  - Priorización de reglas
+  - Templates para títulos y descripciones
+
+- **Integración con GitHub:**
+  - Webhooks automáticos
+  - Comentarios en línea
+  - Resúmenes de revisión
+  - Etiquetas automáticas
+
+- **Infraestructura:**
+  - Base de datos Supabase
+  - Contenedor de dependencias
+  - API RESTful
+  - CLI para administración
+
+- **Integración con LangChain:**
+  - Procesamiento de prompts personalizables
+  - Parseo estructurado de respuestas
+  - Cadenas de procesamiento configurables
+  - Integración con múltiples modelos de IA
+
+## Arquitectura
+
+### Capas (DDD)
+
+1. **Domain:**
+   - Modelos de negocio (PullRequest, Review, etc.)
+   - Excepciones de dominio
+   - Interfaces de repositorios
+
+2. **Application:**
+   - Casos de uso
+   - DTOs para transferencia de datos
+   - Transformadores y helpers
+
+3. **Infrastructure:**
+   - Implementaciones de repositorios
+   - Servicios externos (GitHub, OpenAI)
+   - Configuración y contenedor DI
+   - Cliente Supabase
+
+4. **Interfaces:**
+   - Controllers API
+   - CLI
+   - Webhooks
 
 ## Requisitos Previos
 
@@ -23,184 +69,302 @@ Un bot que analiza Pull Requests usando IA para proporcionar revisiones de códi
 
 ## Configuración Inicial
 
-1. **Crear una GitHub App**:
-   - Ve a Settings > Developer settings > GitHub Apps
-   - Crea una nueva app
-   - Configura los permisos necesarios:
-     - Pull requests: Read & Write
-     - Checks: Read & Write
-     - Contents: Read
-   - Guarda el App ID y genera una Private Key
+### 1. GitHub App
 
-2. **Configurar Supabase**:
-   - Crea un proyecto en Supabase
-   - Guarda la URL y la Service Key
-
-3. **Variables de Entorno**:
-   ```bash
-   cp .env.example .env
+1. Ve a Settings > Developer settings > GitHub Apps
+2. Crea una nueva app con los siguientes permisos:
    ```
-   Edita `.env` con tus valores:
-   ```env
-   # GitHub App
-   GITHUB_APP_ID=tu_app_id
-   GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
-   GITHUB_WEBHOOK_SECRET=tu_webhook_secret
-
-   # OpenAI
-   OPENAI_API_KEY=tu_api_key
-
-   # Supabase
-   SUPABASE_URL=https://tu-proyecto.supabase.co
-   SUPABASE_SERVICE_KEY=tu_service_key
+   Repository permissions:
+   - Pull requests: Read & Write
+   - Checks: Read & Write
+   - Contents: Read
+   - Metadata: Read
+   
+   Subscribe to events:
+   - Pull request
+   - Pull request review
    ```
+3. Guarda el App ID y genera una, Private Key
 
-## Desarrollo Local
+### 2. Supabase
+
+1. Crea un nuevo proyecto
+2. Guarda la URL y Service Key
+3. Las tablas se crearán automáticamente con las migraciones
+
+### 3. Variables de Entorno
+
+```bash
+cp .env.example .env
+```
+
+Configura las siguientes variables:
+
+```env
+# GitHub App
+GITHUB_APP_ID=tu_app_id
+GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+GITHUB_WEBHOOK_SECRET=tu_webhook_secret
+
+# OpenAI
+OPENAI_API_KEY=tu_api_key
+
+# Supabase
+SUPABASE_URL=https://tu-proyecto.supabase.co
+SUPABASE_SERVICE_KEY=tu_service_key
+
+# Configuración App
+LOG_LEVEL=INFO
+ENVIRONMENT=development
+```
+
+## Instalación y Desarrollo
 
 ### Usando Docker (Recomendado)
 
-1. **Iniciar servicios**:
-   ```bash
-   docker-compose up --build
-   ```
-
-2. **Ejecutar migraciones**:
-   ```bash
-   docker-compose exec app python cli.py migrate
-   ```
-
-3. **Cargar datos iniciales**:
-   ```bash
-   docker-compose exec app python cli.py seed development
-   ```
-
-### Sin Docker
-
-1. **Instalar dependencias**:
-   ```bash
-   pip install -r requirements.txt
-   pip install -r requirements-dev.txt
-   ```
-
-2. **Ejecutar migraciones**:
-   ```bash
-   python cli.py migrate
-   ```
-
-3. **Iniciar servidor**:
-   ```bash
-   uvicorn main:app --reload
-   ```
-
-## CLI
-
-El proyecto incluye un CLI para tareas comunes:
-
 ```bash
-# Ver comandos disponibles
-python cli.py --help
+# Construir e iniciar servicios
+docker-compose up --build
 
 # Ejecutar migraciones
-python cli.py migrate [--version VERSION]
+docker-compose exec app python cli.py migrate
 
 # Cargar datos iniciales
-python cli.py seed [development|staging|production]
+docker-compose exec app python cli.py seed development
+```
 
-# Ejecutar tests
-python cli.py test
+### Desarrollo Local
+
+```bash
+# Crear y activar entorno virtual
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate     # Windows
+
+# Instalar dependencias
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+
+# Ejecutar migraciones
+python cli.py migrate
+
+# Iniciar servidor
+uvicorn main:app --reload
 ```
 
 ## API Endpoints
 
 ### Documentación
-
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
 
-### Prompts
-
-#### Crear Prompt
+### Webhooks
 ```http
+POST /webhook/github
+X-GitHub-Event: pull_request
+X-Hub-Signature-256: sha256=...
+
+{
+  "action": "opened",
+  "pull_request": {
+    "number": 123,
+    ...
+  }
+}
+```
+
+### Prompts y Reglas
+```http
+# Crear prompt
 POST /api/v1/prompts
 Content-Type: application/json
 
 {
-    "name": "code_review_prompt",
+    "name": "code_review",
     "version": "1.0.0",
-    "prompt_text": "texto del prompt...",
-    "metadata": {}
+    "prompt_text": "Analiza el siguiente código...",
+    "metadata": {
+        "language": "python",
+        "type": "security"
+    }
 }
-```
 
-### Reglas
-
-#### Crear Regla
-```http
+# Crear regla
 POST /api/v1/rules
 Content-Type: application/json
 
 {
     "name": "naming_convention",
     "rule_type": "style",
-    "rule_content": "Use snake_case...",
+    "rule_content": "Use snake_case for variables",
     "priority": 1
 }
 ```
 
-### Webhook GitHub
+## Integración con LangChain
 
-```http
-POST /webhook/github
-X-GitHub-Event: pull_request
-X-Hub-Signature-256: sha256=...
-```
+### Componentes Principales
 
-## CI/CD
+- **LangchainOrchestrator:**
+  - Coordina el proceso de análisis de código
+  - Gestiona la comunicación con el modelo de IA
+  - Procesa y estructura las respuestas
 
-El proyecto utiliza GitHub Actions para automatización:
+- **Template Processor:**
+  - Combina el prompt base con las reglas de análisis
+  - Inserta el contexto del PR y el código a analizar
+  - Formatea las instrucciones para el modelo
 
-### CI (Integración Continua)
-- Ejecuta en push a main/develop y pull requests
-- Ejecuta tests con cobertura
-- Verifica estilo de código (ruff, black)
-- Verifica tipos (mypy)
-- Usa Supabase local para tests
+- **Output Parser:**
+  - Convierte las respuestas del modelo en estructuras de datos
+  - Valida el formato de las respuestas
+  - Maneja errores de parseo
 
-### CD (Despliegue Continuo)
-- Ejecuta en push a main y tags
-- Construye y publica imagen Docker
-- Despliega automáticamente en producción
+### Flujo de Procesamiento
 
-### Configuración de Secrets
+1. **Preparación:**
+   ```bash
+   orchestrator = LangchainOrchestrator(openai_api_key=settings.OPENAI_API_KEY)
+   ```
 
-En GitHub, configura los siguientes secrets:
+2. **Análisis:**
+   ```bash
+   result = await orchestrator.analyze_code(
+       code=pr.diff,
+       context=pr.to_dict(),
+       rules=active_rules
+   )
+   ```
+
+3. **Resultado:**
+   - El resultado se estructura en un objeto `AIAnalysisResult`
+   - Incluye comentarios, sugerencias y metadatos
+   - Se utiliza para actualizar el PR en GitHub
+
+### Configuración de Prompts
+
+Los prompts se pueden personalizar y almacenar en la base de datos:
+
 ```bash
-# Docker Hub
-DOCKERHUB_USERNAME=usuario
-DOCKERHUB_TOKEN=token
+prompt_template = """
+Analiza el siguiente código teniendo en cuenta:
+{rules}
 
-# Servidor de Producción
-SSH_HOST=ip_servidor
-SSH_USERNAME=usuario
-SSH_PRIVATE_KEY=llave_ssh
+CÓDIGO:
+{code}
+
+CONTEXTO:
+{context}
+
+Genera un análisis estructurado siguiendo este formato:
+{format_instructions}
+"""
 ```
 
-## Estructura del Proyecto
+### Diagrama de Flujo LangChain
+
+El siguiente diagrama muestra cómo se procesa un análisis usando LangChain:
+
+[Ver diagrama de flujo LangChain](diagrams/langchain_flow.mmd)
+
+## CLI
+
+```bash
+# Ver comandos disponibles
+python cli.py --help
+
+# Migraciones
+python cli.py migrate [--version VERSION]
+python cli.py migrate:status
+python cli.py migrate:rollback
+
+# Datos semilla
+python cli.py seed [development|staging|production]
+
+# Tests
+python cli.py test
+python cli.py test:coverage
+```
+
+## Estructura de Archivos
 
 ```
 .
-├── application/          # Casos de uso y DTOs
-├── domain/              # Modelos y lógica de dominio
-├── infrastructure/      # Implementaciones técnicas
-│   ├── ai/             # Integración con LangChain
-│   ├── database/       # Repositorios y migraciones
-│   └── github/         # Servicios de GitHub
-├── interfaces/         # API y controladores
+├── application/
+│   ├── dto/                 # Data Transfer Objects
+│   ├── helpers/            # Funciones auxiliares
+│   └── use_cases/         # Casos de uso
+├── domain/
+│   ├── exceptions.py      # Excepciones de dominio
+│   └── models/            # Modelos de dominio
+├── infrastructure/
+│   ├── ai/               # Servicios de IA
+│   ├── config/          # Configuración
+│   ├── database/        # Acceso a datos
+│   └── github/          # Servicios de GitHub
+├── interfaces/
+│   ├── api/            # Controladores API
+│   └── cli/           # Comandos CLI
 ├── tests/             # Tests
-├── .github/           # Workflows de GitHub Actions
-├── docker-compose.yml # Configuración de Docker
-└── cli.py            # CLI de la aplicación
+├── diagrams/          # Diagramas Mermaid
+├── .env.example      # Template variables de entorno
+├── docker-compose.yml
+└── README.md
 ```
+
+## Base de Datos
+
+### Tablas
+
+- **tech_prs:**
+  - Almacena información de Pull Requests
+  - Campos: id, github_id, number, title, body, status, etc.
+
+- **tech_reviews:**
+  - Almacena revisiones de código
+  - Campos: id, pull_request_id, status, summary, score, etc.
+
+- **tech_review_comments:**
+  - Comentarios específicos de las revisiones
+  - Campos: id, review_id, file_path, line_number, content, etc.
+
+- **tech_analysis_prompts:**
+  - Prompts para el análisis de código
+  - Campos: id, name, version, prompt_text, is_active, etc.
+
+- **tech_analysis_rules:**
+  - Reglas de análisis técnico
+  - Campos: id, name, rule_type, rule_content, priority, etc.
+
+- **tech_pr_title_guidelines:**
+  - Guías para títulos de Pull Requests
+  - Campos: id, prefix, description, is_active, min_length, max_length
+  - Ejemplo: prefijos como "feat:", "fix:", "docs:", etc.
+
+- **tech_pr_description_templates:**
+  - Plantillas para descripciones de Pull Requests
+  - Campos: id, name, template_content, is_active
+  - Define la estructura esperada para las descripciones de PR
+
+- **tech_pr_labels:**
+  - Etiquetas disponibles para Pull Requests
+  - Campos: id, name, description, color, is_active
+  - Etiquetas como "breaking-change", "bug-fix", "enhancement", etc.
+
+### Índices
+
+- `idx_title_guidelines_active`: Optimiza búsqueda de guías de título activas
+- `idx_description_templates_active`: Optimiza búsqueda de plantillas activas
+- `idx_pr_labels_active`: Optimiza búsqueda de etiquetas activas
+
+## Diagramas
+
+- [Diagrama de Dependencias](diagrams/dependencies.mmd)
+- [Diagrama de Arquitectura DDD](diagrams/architecture.mmd)
+- [Diagrama de Flujo de Datos](diagrams/data_flow.mmd)
+- [Diagrama de Flujo de Usuario](diagrams/user_flow.mmd)
+- [Diagrama de Casos de Uso](diagrams/use_cases.mmd)
+- [Diagrama de Flujo LangChain](diagrams/langchain_flow.mmd)
 
 ## Tests
 
@@ -222,15 +386,15 @@ python -m pytest tests/test_webhook.py
 # Ver logs en tiempo real
 docker-compose logs -f app
 
-# Ver logs de base de datos
-docker-compose logs -f db
+# Ver logs específicos
+docker-compose logs -f app | grep ERROR
 ```
 
 ### Endpoints de Monitoreo
 - Health Check: `GET /health`
-- Métricas: `GET /metrics` (si está configurado)
+- Métricas: `GET /metrics`
 
-## Contribuir
+## Contribución
 
 1. Fork el repositorio
 2. Crea una rama (`git checkout -b feature/amazing-feature`)
@@ -238,17 +402,21 @@ docker-compose logs -f db
 4. Push a la rama (`git push origin feature/amazing-feature`)
 5. Abre un Pull Request
 
+### Guías de Contribución
+
+- Sigue el estilo de código existente
+- Añade tests para nueva funcionalidad
+- Actualiza la documentación
+- Verifica que los tests pasen
+- Usa mensajes de commit descriptivos
+
 ## Licencia
 
-Este proyecto está licenciado bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
+Este proyecto está licenciado bajo la Licencia MIT - ver el archivo [LICENSE] para más detalles.
 
-## Base de Datos
+## Contacto
 
-Las tablas del sistema usan el prefijo `tech_` para diferenciarlas de otras aplicaciones:
-
-- `tech_prs`: Pull requests a revisar
-- `tech_reviews`: Revisiones técnicas realizadas
-- `tech_review_comments`: Comentarios de las revisiones
-- `tech_analysis_prompts`: Prompts para el análisis
-- `tech_analysis_rules`: Reglas de análisis técnico
+Nombre - [@twitter_handle](https://twitter.com/twitter_handle)
+Email - email@example.com
+Project Link: [https://github.com/username/repo](https://github.com/username/repo)
 
