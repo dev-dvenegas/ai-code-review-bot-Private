@@ -6,6 +6,7 @@ from datetime import datetime
 import logging
 
 from application.dto.ai_analysis_result_dto import AIAnalysisResult
+from application.helpers.transformers import update_review_with_analysis
 from application.use_cases.generate_pr_metadata import GeneratePRMetadataUseCase
 from domain.models.pull_request import PullRequest
 from domain.models.review import Review, ReviewStatus, ReviewComment
@@ -136,8 +137,8 @@ class AnalyzePullRequestUseCase:
 
             pull_request = await self.metadata_generator.execute(pull_request)
 
-            # Actualizar review con resultados
-            self._update_review_with_analysis(review, analysis_result)
+            # Actualizar la instancia 'review' usando el transformer
+            update_review_with_analysis(review, analysis_result)
 
             # Guardar en base de datos
             await self.reviews_repo.save(review)
@@ -170,27 +171,3 @@ class AnalyzePullRequestUseCase:
                 review.fail(str(e))
                 await self.reviews_repo.save(review)
             raise ReviewFailedException(str(e))
-
-    def _update_review_with_analysis(self, review: Review, analysis: AIAnalysisResult):
-        """
-        Actualiza una revisión con los resultados del análisis.
-
-        Args:
-            review: Revisión a actualizar
-            analysis: Resultados del análisis de IA
-        """
-        review.summary = analysis.summary
-        review.score = analysis.score
-        review.suggested_title = analysis.suggested_title
-        review.suggested_labels = analysis.suggested_labels
-        review.suggested_description = analysis.suggested_description
-
-        for comment in analysis.comments:
-            review.add_comment(
-                file_path=comment.file_path,
-                line_number=comment.line_number,
-                content=comment.content,
-                suggestion=comment.suggestion
-            )
-
-        review.complete(analysis.score)

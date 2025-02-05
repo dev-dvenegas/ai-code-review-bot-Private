@@ -5,6 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware  # Para manejar CORS (Cross-O
 from fastapi.openapi.utils import get_openapi  # Para personalizar la documentación OpenAPI
 from interfaces.api.webhook_controller import router as webhook_router
 from interfaces.api.prompt_controller import router as prompt_router
+from interfaces.api.metrics_controller import router as metrics_router
+from interfaces.api.guidelines_controller import router as guidelines_router
 from domain.exceptions import DomainException
 from infrastructure.api.error_handlers import (
     domain_exception_handler,
@@ -16,6 +18,11 @@ from infrastructure.api.error_handlers import (
 from postgrest import APIError as PostgrestAPIError  # Errores de la base de datos
 from gotrue.errors import AuthApiError  # Errores de autenticación
 from supabase._sync.client import SupabaseException  # Errores generales de Supabase
+
+# Importar e inicializar el logging
+from infrastructure.logging.logging_config import setup_logging
+
+setup_logging()
 
 # Creamos la aplicación FastAPI con metadata
 # Esta metadata se usa para generar la documentación automática
@@ -89,6 +96,9 @@ app.add_exception_handler(Exception, general_exception_handler)  # Otros errores
 # Los routers nos permiten organizar endpoints relacionados
 app.include_router(webhook_router, prefix="/webhook", tags=["webhook"])
 app.include_router(prompt_router)
+app.include_router(metrics_router)
+app.include_router(guidelines_router)
+
 
 # Endpoint simple para verificar que la API está funcionando
 @app.get("/health")

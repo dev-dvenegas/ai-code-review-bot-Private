@@ -1,3 +1,4 @@
+import logging
 from typing import List, Dict, Any
 from langchain_community.chat_models import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
@@ -5,6 +6,7 @@ from langchain.output_parsers import PydanticOutputParser
 from application.dto.ai_analysis_result_dto import AIAnalysisResult
 from application.dto.prompt_dto import RuleDTO  # Asegúrate de tener esta importación
 
+logger = logging.getLogger(__name__)
 
 class LangchainOrchestrator:
     """
@@ -75,8 +77,6 @@ class LangchainOrchestrator:
             context=str(context),
             **context
         )
-
-        # Para debug: imprime el prompt final que se enviará
 
         # Obtener respuesta del modelo
         response = await self.llm.agenerate([formatted_prompt])

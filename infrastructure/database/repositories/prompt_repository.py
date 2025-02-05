@@ -1,3 +1,4 @@
+import logging
 from typing import Optional, List
 from datetime import datetime
 from supabase import Client
@@ -9,6 +10,8 @@ from domain.exceptions import (
     PromptNotFoundException,
     DuplicatePromptVersionException
 )
+
+logger = logging.getLogger(__name__)
 
 class Prompt(BaseModel):
     id: str

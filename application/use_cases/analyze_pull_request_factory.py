@@ -1,5 +1,6 @@
 # Este módulo implementa el patrón Factory para crear instancias del caso de uso
 # de análisis de Pull Requests con todas sus dependencias
+import logging
 
 from fastapi import Depends
 
@@ -13,6 +14,8 @@ from infrastructure.database.repositories.pr_guidelines_repository import PRGuid
 from infrastructure.github.github_service import GitHubService
 from infrastructure.ai.langchain_orchestrator import LangchainOrchestrator
 from application.use_cases.analyze_pull_request import AnalyzePullRequestUseCase
+
+logger = logging.getLogger(__name__)
 
 def get_analyze_pr_use_case(
     settings: Settings = Depends(get_settings)

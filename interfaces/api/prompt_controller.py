@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, HTTPException, Depends, status
 from typing import List
 from application.dto.prompt_dto import (
@@ -7,6 +9,8 @@ from application.dto.prompt_dto import (
 from infrastructure.database.repositories.prompt_repository import PromptRepository, Prompt
 from infrastructure.config.settings import get_settings
 from infrastructure.database.supabase_client import get_supabase_client
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1", tags=["prompts"])
 

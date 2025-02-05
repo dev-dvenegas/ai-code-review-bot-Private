@@ -1,3 +1,4 @@
+import logging
 from typing import List, Optional
 from datetime import datetime
 from supabase import Client
@@ -6,6 +7,8 @@ from domain.models.pr_guidelines import (
     PRDescriptionTemplate,
     PRLabel
 )
+
+logger = logging.getLogger(__name__)
 
 class PRGuidelinesRepository:
     """Repositorio para gestionar guías y configuraciones de PR"""

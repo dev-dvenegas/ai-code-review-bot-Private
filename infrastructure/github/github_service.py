@@ -106,9 +106,6 @@ class GitHubService:
         else:
             event = "REQUEST_CHANGES"
 
-        # Obtener el diff completo (para calcular la posición)
-        # diff = await self.get_pull_request_diff(repository, pr_number)
-
         # Construir el payload para los comentarios usando "position" (calculado)
         comments_payload = []
         for comment in review.comments:

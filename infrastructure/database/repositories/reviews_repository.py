@@ -1,10 +1,12 @@
 # Este módulo implementa el repositorio para gestionar las revisiones en la base de datos
 # Sigue el patrón Repository para abstraer el acceso a datos
-
+import logging
 from typing import Optional, List
 from datetime import datetime
 from supabase import Client
 from domain.models.review import Review, ReviewComment, ReviewStatus
+
+logger = logging.getLogger(__name__)
 
 class ReviewsRepository:
     """

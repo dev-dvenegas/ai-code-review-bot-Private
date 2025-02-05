@@ -1,28 +1,30 @@
 # Framework web y utilidades
-fastapi>=0.100.0          # Framework web moderno y rápido
-uvicorn>=0.23.0          # Servidor ASGI para FastAPI
-pydantic>=2.0.0          # Validación de datos y configuración
-pydantic-settings>=2.0.3 # Configuración basada en variables de entorno
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.3
+dependency-injector>=4.40.0
 
 # Gestión de configuración
-python-dotenv>=1.0.0     # Carga de variables de entorno desde .env
+python-dotenv>=1.0.0
 
 # Integración con IA
-langchain>=0.0.330       # Framework para aplicaciones de IA
-openai>=1.2.0            # Cliente oficial de OpenAI
-langchain_community>=0.3.16  # Componentes comunitarios de Langchain
+langchain>=0.0.330
+openai>=1.2.0
+langchain_community>=0.3.16
 
 # Base de datos y autenticación
-supabase>=2.0.0          # Cliente de Supabase
-postgrest>=0.10.6        # Cliente PostgREST para Supabase
-psycopg2-binary>=2.9.9   # Driver de PostgreSQL
-gotrue~=2.11.3          # Cliente de autenticación de Supabase
+supabase>=2.0.0
+postgrest>=0.10.6
+psycopg2-binary>=2.9.9
+gotrue~=2.11.3
 
 # Utilidades
-PyJWT>=2.8.0            # Manejo de JWT
+PyJWT>=2.8.0
 cryptography>=3.0
-requests>=2.31.0        # Cliente HTTP
-python-multipart>=0.0.6 # Manejo de formularios multipart
-typer>=0.9.0           # CLI moderno para Python
-httpx>=0.24.0          # Cliente HTTP async
+requests>=2.31.0
+python-multipart>=0.0.6
+typer>=0.9.0
+httpx>=0.24.0
 unidiff==0.7.0
+psutil>=5.9.0

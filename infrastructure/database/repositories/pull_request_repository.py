@@ -1,7 +1,10 @@
+import logging
 from typing import Optional
 from datetime import datetime
 from supabase import Client
 from domain.models.pull_request import PullRequest, PullRequestStatus
+
+logger = logging.getLogger(__name__)
 
 class PullRequestRepository:
     """

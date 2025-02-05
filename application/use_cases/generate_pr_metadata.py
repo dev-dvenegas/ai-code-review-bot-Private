@@ -1,8 +1,10 @@
+import logging
 from datetime import datetime
 from domain.models.pull_request import PullRequest
 from domain.exceptions import PRMetadataGenerationException
 from infrastructure.database.repositories.pr_guidelines_repository import PRGuidelinesRepository
 
+logger = logging.getLogger(__name__)
 
 class GeneratePRMetadataUseCase:
     """
