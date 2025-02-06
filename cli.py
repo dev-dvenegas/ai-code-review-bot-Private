@@ -42,15 +42,15 @@ def seed(environment: str = "development"):
     """
     Carga datos iniciales en la base de datos para el ambiente indicado.
     """
-    typer.echo(f"Cargando seeds para el ambiente '{environment}'...")
-    seeds_path = os.path.join(os.path.dirname(__file__), "infrastructure", "database", "seeds", "initial_prompts.sql")
-    if not os.path.isfile(seeds_path):
-        typer.echo("No se encontró el archivo de seeds.")
-        raise typer.Exit(code=1)
-    with open(seeds_path, "r", encoding="utf-8") as f:
-        sql = f.read()
+    # typer.echo(f"Cargando seeds para el ambiente '{environment}'...")
+    # seeds_path = os.path.join(os.path.dirname(__file__), "infrastructure", "database", "seeds", "initial_prompts.sql")
+    # if not os.path.isfile(seeds_path):
+    #     typer.echo("No se encontró el archivo de seeds.")
+    #     raise typer.Exit(code=1)
+    # with open(seeds_path, "r", encoding="utf-8") as f:
+    #     sql = f.read()
     typer.echo("Ejecutando seed inicial:")
-    typer.echo(sql)
+    # typer.echo(sql)
     # Aquí se debería ejecutar el SQL contra la base de datos.
     typer.echo("Seeds completados.")
 
