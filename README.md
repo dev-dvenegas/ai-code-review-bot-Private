@@ -123,15 +123,33 @@ ENVIRONMENT=development
 ### Usando Docker (Recomendado)
 
 ```bash
-# Construir e iniciar servicios
+# Asegúrate de tener el archivo .env configurado con las variables necesarias:
+GITHUB_APP_ID=tu_app_id
+GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+GITHUB_WEBHOOK_SECRET=tu_webhook_secret
+OPENAI_API_KEY=tu_api_key
+SUPABASE_URL=https://tu-proyecto.supabase.co
+SUPABASE_SERVICE_KEY=tu_service_key
+
+# Construir e iniciar el servicio
 docker-compose up --build
-
-# Ejecutar migraciones
-docker-compose exec app python cli.py migrate
-
-# Cargar datos iniciales
-docker-compose exec app python cli.py seed development
 ```
+
+La aplicación estará disponible en:
+- API: http://localhost:8000
+- Documentación: http://localhost:8000/docs
+
+### Estructura del Docker
+
+El proyecto utiliza:
+- `Dockerfile`: Imagen base Python 3.11 con las dependencias mínimas necesarias
+- `docker-compose.yml`: Configura el servicio de la API y maneja las variables de entorno
+- Hot-reload activado para desarrollo
+
+### Notas Importantes
+- La aplicación se conecta directamente a una instancia existente de Supabase
+- No es necesario ejecutar migraciones ni seeds
+- Las tablas y estructura de datos deben existir previamente en Supabase
 
 ### Desarrollo Local
 
@@ -144,9 +162,6 @@ venv\Scripts\activate     # Windows
 # Instalar dependencias
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
-
-# Ejecutar migraciones
-python cli.py migrate
 
 # Iniciar servidor
 uvicorn main:app --reload

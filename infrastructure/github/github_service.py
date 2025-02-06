@@ -166,8 +166,7 @@ class GitHubService:
                 headers={"Authorization": f"token {token}"},
                 json=comment_data
             )
-            print("Debug: Metadata comment response status:", response.status_code)
-            print("Debug: Metadata comment response body:", response.text)
+            print(f"Debug: Metadata comment response body:", response.text)
             response.raise_for_status()
 
     async def update_pr(

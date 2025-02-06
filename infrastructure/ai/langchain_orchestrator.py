@@ -77,6 +77,7 @@ class LangchainOrchestrator:
             context=str(context),
             **context
         )
+        print(f"Debug: formatted_prompt:", formatted_prompt)
 
         # Obtener respuesta del modelo
         response = await self.llm.agenerate([formatted_prompt])
