@@ -9,13 +9,17 @@ flowchart TD
         TP[Template Processor]
         Parser[PydanticOutputParser]
         Chain[LLMChain]
-        LLM[ChatOpenAI/GPT-4]
+        LLM[ChatOpenAI]
     end
 
     subgraph Output
         AR[AIAnalysisResult]
-        Comments[Review Comments]
-        Meta[PR Metadata]
+        subgraph Results
+            Comments[Review Comments]
+            Security[Security Concerns]
+            Performance[Performance Issues]
+            Meta[PR Metadata]
+        end
     end
 
     PR --> TP
@@ -28,6 +32,8 @@ flowchart TD
     Parser --> AR
 
     AR --> Comments
+    AR --> Security
+    AR --> Performance
     AR --> Meta
 
     style LLM fill:#f9f,stroke:#333

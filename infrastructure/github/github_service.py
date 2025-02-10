@@ -4,30 +4,9 @@ import httpx
 from typing import Dict, List, Optional
 from domain.models.review import Review
 import unidiff  # Asegúrate de tener instalada la librería unidiff
+import logging
 
-
-def extract_diff_position(diff: str, file_path: str, target_line: int) -> int:
-    """
-    Utiliza la librería unidiff para parsear el diff y calcular la posición
-    en el diff correspondiente a la línea objetivo (target_line) del archivo.
-
-    Args:
-        diff (str): El diff completo (en formato unified).
-        file_path (str): La ruta del archivo (relativa a la raíz del repositorio).
-        target_line (int): El número de línea (en el archivo) donde se debe colocar el comentario.
-
-    Returns:
-        int: La posición en el diff para ese comentario.
-        Si no se encuentra un hunk correspondiente, se retorna target_line.
-    """
-    patch_set = unidiff.PatchSet(diff.splitlines(keepends=True))
-    for patch in patch_set:
-        if patch.target_file.endswith(file_path) or patch.source_file.endswith(file_path):
-            for hunk in patch:
-                if hunk.target_start <= target_line < (hunk.target_start + hunk.target_length):
-                    # Calcula la posición como: (línea objetivo - inicio del hunk) + 1
-                    return target_line - hunk.target_start + 1
-    return target_line  # Valor por defecto si no se encuentra
+logger = logging.getLogger(__name__)
 
 
 class GitHubService:
@@ -87,18 +66,17 @@ class GitHubService:
 
     async def create_review_comments(self, repository: str, pr_number: int, review: Review, diff: str) -> None:
         """
-        Crea comentarios en un Pull Request basados en una revisión y determina el evento
-        de GitHub (APPROVE, COMMENT o REQUEST_CHANGES) según el score de la review.
-
+        Crea una revisión en GitHub con comentarios.
+        
         Args:
-            repository: Nombre del repositorio.
-            pr_number: Número del Pull Request.
-            review: Revisión con los comentarios a publicar.
-            diff: diff de repositorio.
+            repository: Nombre del repositorio
+            pr_number: Número del Pull Request
+            review: Objeto Review con los comentarios
+            diff: Contenido del diff del PR
         """
         token = await self._get_auth_token()
 
-        # Determinar el tipo de evento según el score de la review
+        # Determinar el evento según el score
         if review.score >= 90:
             event = "APPROVE"
         elif review.score >= 70:
@@ -106,35 +84,98 @@ class GitHubService:
         else:
             event = "REQUEST_CHANGES"
 
-        # Construir el payload para los comentarios usando "position" (calculado)
-        comments_payload = []
-        for comment in review.comments:
-            position = extract_diff_position(diff, comment.file_path, comment.line_number)
-            comments_payload.append({
-                "path": comment.file_path,
-                "position": position,  # Posición calculada
-                "body": (
-                    f"{comment.content}\n\n"
-                    f"```suggestion\n{comment.suggestion}\n```"
-                    if comment.suggestion else comment.content
-                )
-            })
+        # # Construir los comentarios con el formato correcto de GitHub
+        # comments = []
+        
+        # Construir el comentario general con el formato estructurado
+        general_comment = (
+            f"# Pull Request Analysis\n\n"
+            f"## Summary\n{review.summary}\n\n"
+            f"## Score: {review.score}/100\n\n"
+            f"## Security Concerns\n"
+            + "\n".join(f"- {issue}" for issue in review.security_concerns or [])
+            + "\n\n## Performance Issues\n"
+            + "\n".join(f"- {issue}" for issue in review.performance_issues or [])
+        )
 
+        # Agregar el comentario general como parte del body principal del review
         review_data = {
-            "body": review.summary,
+            "commit_id": await self._get_latest_commit_sha(repository, pr_number),
+            "body": general_comment,
             "event": event,
+            "comments": []
         }
-        if comments_payload:
-            review_data["comments"] = comments_payload
+        # Luego agregar los comentarios específicos
+        for comment in review.comments:
+            if comment.file_path:  # Solo procesar comentarios con archivo asociado
+                try:
+                    # Obtener el diff específico del archivo
+                    patch_set = unidiff.PatchSet(diff.splitlines(keepends=True))
+                    target_file = None
+                    for patched_file in patch_set:
+                        if patched_file.path == comment.file_path:
+                            target_file = patched_file
+                            break
+
+                    if target_file:
+                        # Encontrar el hunk correcto y la posición
+                        for hunk in target_file:
+                            if hunk.target_start <= comment.line_number <= (hunk.target_start + hunk.target_length):
+                                comment_body = f"{comment.content}"
+                                
+                                if comment.suggestion:
+                                    comment_body += "\n\n```suggestion\n" + comment.suggestion + "\n```"
+                                
+                                comment_data = {
+                                    "path": comment.file_path,
+                                    "line": comment.line_number,
+                                    "body": comment_body
+                                }
+                                review_data["comments"].append(comment_data)
+                                break
+
+                except Exception as e:
+                    logger.error(f"Error procesando comentario para {comment.file_path}: {str(e)}")
+                    continue
+
 
         async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{self.base_url}/repos/{repository}/pulls/{pr_number}/reviews",
-                headers={"Authorization": f"token {token}"},
-                json=review_data
-            )
+            try:
+                response = await client.post(
+                    f"{self.base_url}/repos/{repository}/pulls/{pr_number}/reviews",
+                    headers={
+                        "Authorization": f"token {token}",
+                        "Accept": "application/vnd.github.v3+json"
+                    },
+                    json=review_data
+                )
+        
+                if not response.is_success:
+                    logger.error(f"GitHub API Error: {response.status_code}")
+                    logger.error(f"Response body: {response.text}")
+        
+                response.raise_for_status()
+        
+            except httpx.HTTPError as e:
+                logger.error(f"Error creating review: {str(e)}")
+                raise
 
+    async def _get_latest_commit_sha(self, repository: str, pr_number: int) -> str:
+        """
+        Obtiene el SHA del último commit en el PR.
+        """
+        token = await self._get_auth_token()
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{self.base_url}/repos/{repository}/pulls/{pr_number}/commits",
+                headers={
+                    "Authorization": f"token {token}",
+                    "Accept": "application/vnd.github.v3+json"
+                }
+            )
             response.raise_for_status()
+            commits = response.json()
+            return commits[-1]["sha"] if commits else None
 
     async def create_metadata_comment(self, repository: str, pr_number: int, metadata: Dict[str, str]):
         """

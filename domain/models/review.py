@@ -41,6 +41,8 @@ class Review(BaseModel):
     suggested_description: Optional[str] = None
     suggested_labels: List[str] = []
     comments: List[ReviewComment] = []  # Relación con tech_review_comments
+    security_concerns: List[str] = []  # Lista de problemas de seguridad
+    performance_issues: List[str] = []  # Lista de problemas de rendimiento
 
     def add_comment(self, file_path: str, line_number: int, content: str, suggestion: Optional[str] = None):
         """

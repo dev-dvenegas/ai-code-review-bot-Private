@@ -6,9 +6,10 @@ Un bot que analiza Pull Requests usando IA para proporcionar revisiones de códi
 
 - **Análisis Automático de PRs:**
   - Revisión de código usando GPT-4
-  - Detección de problemas potenciales
-  - Sugerencias de mejoras
+  - Detección de problemas de seguridad y rendimiento
+  - Sugerencias de código específicas por línea
   - Análisis de complejidad y calidad
+  - Resumen general con puntuación
 
 - **Gestión de Reglas:**
   - Prompts personalizables
@@ -18,8 +19,8 @@ Un bot que analiza Pull Requests usando IA para proporcionar revisiones de códi
 
 - **Integración con GitHub:**
   - Webhooks automáticos
-  - Comentarios en línea
-  - Resúmenes de revisión
+  - Comentarios en línea con sugerencias de código
+  - Resumen general con problemas de seguridad y rendimiento
   - Etiquetas automáticas
 
 - **Infraestructura:**
@@ -434,4 +435,66 @@ Este proyecto está licenciado bajo la Licencia MIT - ver el archivo [LICENSE] p
 Nombre - [@twitter_handle](https://twitter.com/twitter_handle)
 Email - email@example.com
 Project Link: [https://github.com/username/repo](https://github.com/username/repo)
+
+## Estructura del Proyecto
+
+### Domain
+- **Modelos:**
+  - Review (con security_concerns y performance_issues)
+  - PullRequest
+  - ReviewComment
+- Excepciones de dominio
+- Interfaces de repositorios
+
+### Application
+- **DTOs:**
+  - CodeAnalysisResult
+  - PRMetadataResult
+  - AIAnalysisResult
+- Casos de uso
+- Transformadores y helpers
+
+## Flujo de Análisis
+
+1. Recepción de webhook de GitHub
+2. Análisis del código usando LangChain:
+   - Análisis de código y problemas
+   - Generación de metadata
+3. Generación de resultados:
+   - Resumen general con puntuación
+   - Lista de problemas de seguridad
+   - Lista de problemas de rendimiento
+   - Comentarios específicos por línea con sugerencias
+4. Publicación en GitHub:
+   - Comentario general con resumen, score y problemas
+   - Comentarios en línea con sugerencias de código
+
+## Integración con GitHub
+
+El bot crea dos tipos de comentarios en los Pull Requests:
+
+1. **Comentario General:**
+   ```markdown
+   # Pull Request Analysis
+
+   ## Summary
+   [Resumen del análisis]
+
+   ## Score: XX/100
+
+   ## Security Concerns
+   - [Lista de problemas de seguridad]
+
+   ## Performance Issues
+   - [Lista de problemas de rendimiento]
+   ```
+
+2. **Comentarios en Línea:**
+   ```markdown
+   [TIPO - severidad] Explicación del problema
+
+   ```suggestion
+   Código sugerido para corregir el problema
+   ```
+   ```
 

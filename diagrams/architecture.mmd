@@ -3,17 +3,32 @@ flowchart TD
         DM["Modelos y Lógica de Dominio"]
         DE["Excepciones de Dominio"]
         DS["Servicios de Dominio"]
+        
+        subgraph Models["Modelos"]
+            Review["Review<br>- security_concerns<br>- performance_issues"]
+            PR["PullRequest"]
+        end
     end
 
     subgraph Application["Aplicación"]
         UC["Casos de Uso"]
         DTO["DTOs"]
+        
+        subgraph DTOs["Data Transfer Objects"]
+            CodeAnalysis["CodeAnalysisResult"]
+            PRMetadata["PRMetadataResult"]
+        end
     end
 
     subgraph Infrastructure["Infraestructura"]
         REPO["Repositorios"]
         EXT["Servicios Externos"]
-        CONFIG["Configuración e Inyección"]
+        CONFIG["Configuración"]
+        
+        subgraph Services["Servicios"]
+            GitHub["GitHubService"]
+            AI["LangchainOrchestrator"]
+        end
     end
 
     subgraph Interfaces["Interfaces"]
@@ -21,19 +36,11 @@ flowchart TD
         CLI["CLI"]
     end
 
-    DM --> UC
-    DE --> UC
-    UC --> DTO
-
-    REPO --> EXT
-    CONFIG --> REPO
-    CONFIG --> EXT
-
-    UC --> REPO
-    UC --> EXT
-
-    API --> UC
-    CLI --> UC
+    Models --> UC
+    DTOs --> UC
+    UC --> Services
+    Services --> GitHub
+    Services --> AI
 
     style Domain fill:#f9f,stroke:#333
     style Application fill:#bbf,stroke:#333

@@ -4,8 +4,7 @@
 from typing import List
 from datetime import datetime
 import logging
-
-from application.dto.ai_analysis_result_dto import AIAnalysisResult
+import asyncio
 from application.helpers.transformers import update_review_with_analysis
 from application.use_cases.generate_pr_metadata import GeneratePRMetadataUseCase
 from domain.models.pull_request import PullRequest
@@ -94,8 +93,10 @@ class AnalyzePullRequestUseCase:
                 diff = diff.decode("utf-8")
 
             # Obtener prompt activo y reglas
-            prompt_dto = self.prompt_repo.get_active_prompt()
-            prompt_text = prompt_dto.prompt_text  # Extraemos el texto del prompt
+            code_analysis_prompt = self.prompt_repo.get_latest_prompt_by_category("code_analysis")
+            metadata_prompt = self.prompt_repo.get_latest_prompt_by_category("metadata")
+            
+            # Obtener reglas y guías
             rules = self.prompt_repo.get_all_active_rules()
 
             # Recuperar guías de título, plantilla de descripción y lineamientos de etiquetas
@@ -124,21 +125,33 @@ class AnalyzePullRequestUseCase:
                 "pr_body": pull_request.body
             }
 
-            # Realizar análisis con IA
-            analysis_result = await self.ai.analyze_code(
+            # Realizar análisis en paralelo
+            code_analysis_task = self.ai.analyze_code(
                 diff=diff,
-                prompt=prompt_text,
+                prompt=code_analysis_prompt.prompt_text,
                 rules=rules,
+                context=context
+            )
+            
+            metadata_task = self.ai.generate_metadata(
+                prompt=metadata_prompt.prompt_text,
                 context=context,
                 title_guidelines=title_guidelines_str,
                 description_template=description_template_str,
                 label_guidelines=label_guidelines_str
             )
-
+            
+            # Esperar resultados
+            code_analysis, metadata = await asyncio.gather(
+                code_analysis_task,
+                metadata_task
+            )
+            
+            
             pull_request = await self.metadata_generator.execute(pull_request)
 
-            # Actualizar la instancia 'review' usando el transformer
-            update_review_with_analysis(review, analysis_result)
+            # Actualizar review con resultados
+            update_review_with_analysis(review, code_analysis, metadata)
 
             # Guardar en base de datos
             await self.reviews_repo.save(review)

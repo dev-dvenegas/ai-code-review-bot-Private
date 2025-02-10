@@ -4,14 +4,30 @@ flowchart TD
     C[Obtener Dependencias<br>desde el Contenedor]
     D[AnalyzePullRequestUseCase]
     E[Repositorios:<br>Pull Request, Reviews, etc.]
-    F[GeneratePRMetadataUseCase]
-    G[GitHubService:<br>Publicar Comentarios]
+    F[LangchainOrchestrator]
+    G[GitHubService]
     H[Respuesta a GitHub]
+    
+    subgraph Análisis
+        F1[Análisis de Código]
+        F2[Generación de Metadata]
+    end
+    
+    subgraph Resultados
+        G1[Comentario General<br>Summary/Score/Issues]
+        G2[Comentarios por Línea<br>con Sugerencias]
+    end
 
     A --> B
     B --> C
     C --> D
     D --> E
-    E --> F
-    F --> G
-    G --> H 
+    D --> F
+    F --> F1
+    F --> F2
+    F1 --> G
+    F2 --> G
+    G --> G1
+    G --> G2
+    G1 --> H
+    G2 --> H 

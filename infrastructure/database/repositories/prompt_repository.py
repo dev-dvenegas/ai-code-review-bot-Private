@@ -200,4 +200,18 @@ class PromptRepository:
                 .execute()
 
         prompt.id = result.data[0]["id"]
-        return prompt 
+        return prompt
+
+    def get_latest_prompt_by_category(self, category: str) -> PromptDTO:
+        """Obtiene el prompt más reciente de una categoría específica"""
+        result = self.supabase.table(self.table)\
+            .select("*")\
+            .eq("category", category)\
+            .order("version", desc=True)\
+            .limit(1)\
+            .execute()
+
+        if not result.data:
+            raise PromptNotFoundException(f"No prompt found for category: {category}")
+
+        return PromptDTO(**result.data[0]) 
